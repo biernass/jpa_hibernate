@@ -16,7 +16,8 @@ public class ExElectionsRunner {
     public static void main(String[] args) {
 
 
-        System.out.println(getStudentsTest(em));
+        //System.out.println(getStudentsTest(em));
+        genderCount(em);
 
         em.close();
         managerFactory.close();
@@ -28,6 +29,26 @@ public class ExElectionsRunner {
         Root<Student> from = query.from(Student.class);
         query.select(from);
         return em.createQuery(query).getResultList();
+    }
+
+    //2.1
+    private static void genderCount(EntityManager em) {
+        CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);
+        Root<Student> from = criteriaQuery.from(Student.class);
+
+        List<String> resultList = em.createQuery(criteriaQuery.select(from.get("name"))).getResultList();
+
+        int male = 0;
+        int female = 0;
+        for (String string : resultList) {
+            if (string.endsWith("a")) {
+                female++;
+            } else {
+                male++;
+            }
+        }
+        System.out.println("Kobiety: " + female + ". Mężczyźni: " + male);
     }
 
 
