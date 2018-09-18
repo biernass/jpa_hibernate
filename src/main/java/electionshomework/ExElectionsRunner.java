@@ -1,10 +1,9 @@
 package electionshomework;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import java.util.List;
 
@@ -17,7 +16,9 @@ public class ExElectionsRunner {
 
 
         //System.out.println(getStudentsTest(em));
-        genderCount(em);
+        //genderCount(em);
+        //PPU(em);
+        getNumberOfAbsentVote(em);
 
         em.close();
         managerFactory.close();
@@ -51,7 +52,46 @@ public class ExElectionsRunner {
         System.out.println("Kobiety: " + female + ". Mężczyźni: " + male);
     }
 
+    // 2.2
+    private static void PPU(EntityManager em) {
+        CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+        CriteriaQuery<Tuple> criteriaQuery = criteriaBuilder.createTupleQuery();
+        Root<Vote> fromVote = criteriaQuery.from(Vote.class);
+        Root<Candidate> fromCandidate = criteriaQuery.from(Candidate.class);
 
+        criteriaQuery.multiselect(fromCandidate.get("name").alias("name"), fromCandidate.get("surname").alias("surname"),
+                criteriaBuilder.count(fromCandidate.get("name")).alias("count"))
+                .where(criteriaBuilder.equal(fromVote.get("candidate"), fromCandidate.get("id")))
+                .groupBy(fromCandidate.get("name"), fromCandidate.get("surname"))
+                .orderBy(criteriaBuilder.desc(criteriaBuilder.count(fromCandidate.get("name"))));
+
+        TypedQuery<Tuple> typedQuery = em.createQuery(criteriaQuery);
+        List<Tuple> resultList = typedQuery.setMaxResults(10).getResultList();
+        for (Tuple t : resultList) {
+            System.out.println(t.get("name") + ", " + t.get("surname") + ", " + t.get("count"));
+        }
+    }
+
+    // 2.3
+    private static void getNumberOfAbsentVote(EntityManager em) {
+        CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        CriteriaQuery<Long> cqAllStudents = criteriaBuilder.createQuery(Long.class);
+        Root<Vote> voteRoot = criteriaQuery.from(Vote.class);
+        Root<Student> studentRoot = criteriaQuery.from(Student.class);
+
+        criteriaQuery.select(criteriaBuilder.countDistinct(studentRoot.get("id")).alias("count"))
+                .where(criteriaBuilder.equal(voteRoot.get("student"), studentRoot.get("id")));
+
+        TypedQuery<Long> allVotes = em.createQuery(criteriaQuery);
+
+        cqAllStudents.select(criteriaBuilder.countDistinct(studentRoot.get("id"))).from(Student.class);
+
+        TypedQuery<Long> allStudents = em.createQuery(cqAllStudents);
+
+        System.out.println(allStudents.getSingleResult() - allVotes.getSingleResult());
+
+    }
 
 
 }
