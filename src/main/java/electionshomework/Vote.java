@@ -12,7 +12,7 @@ public class Vote {
     @ManyToOne
     @JoinColumn(name = "id_ucznia")
     private Student student;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "id_kandydata")
     private Candidate candidate;
 

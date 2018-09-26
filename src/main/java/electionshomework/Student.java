@@ -1,9 +1,7 @@
 package electionshomework;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "zad2_uczniowie")
@@ -20,6 +18,8 @@ public class Student {
     private String className;
     @Column(name = "rok_nauki")
     private int yearOfStudy;
+    @OneToMany(mappedBy = "student")
+    private List<Vote> votes;
 
     public Student() {
     }

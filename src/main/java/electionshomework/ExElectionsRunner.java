@@ -1,10 +1,7 @@
 package electionshomework;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.List;
 
 public class ExElectionsRunner {
@@ -18,7 +15,8 @@ public class ExElectionsRunner {
         //System.out.println(getStudentsTest(em));
         //genderCount(em);
         //PPU(em);
-        getNumberOfAbsentVote(em);
+        //getNumberOfAbsentVote(em);
+        avgNumberOfVotesForEve(em);
 
         em.close();
         managerFactory.close();
@@ -93,5 +91,25 @@ public class ExElectionsRunner {
 
     }
 
+    private static void avgNumberOfVotesForEve(EntityManager em) {
+        CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+        CriteriaQuery<Tuple> criteriaQuery = criteriaBuilder.createQuery(Tuple.class);
+        Root<Student> studentRoot = criteriaQuery.from(Student.class);
+        Join<Student, Vote> studentVoteJoin = studentRoot.join("votes", JoinType.LEFT);
 
+        criteriaQuery.multiselect(studentRoot.get("yearOfStudy"), studentRoot.get("className"),
+                criteriaBuilder.toDouble(
+                        criteriaBuilder.quot(criteriaBuilder.count(studentVoteJoin.get("id")),
+                                criteriaBuilder.prod(
+                                        criteriaBuilder.countDistinct(studentRoot.get("id")), 1.0))).alias("avg"));
+        criteriaQuery.groupBy(studentRoot.get("yearOfStudy"), studentRoot.get("className"));
+        criteriaQuery.orderBy(criteriaBuilder.asc(studentRoot.get("yearOfStudy")), criteriaBuilder.asc(studentRoot.get("className")));
+
+        List<Tuple> list = em.createQuery(criteriaQuery).getResultList();
+
+        for (Tuple t : list) {
+            System.out.println(t.get(0) + " " + t.get(1) + " : " + String.format("%.2f", t.get(2)));
+        }
+    }
 }
+
